@@ -61,6 +61,9 @@ public class Hash {
 	public Map<String,Long> getMap1(){
 		return map1;
 	}
+	public long getKP(String kmer){
+		return map1.get(kmer);
+	}
     public static void main(String[] args) throws FileNotFoundException,
             IOException {
 
@@ -196,4 +199,5 @@ public class Hash {
         int R = Math.max(4, k*length*length);
         return firstLargerPrime(R);
     }
+    
 }

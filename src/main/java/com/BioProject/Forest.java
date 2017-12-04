@@ -70,6 +70,10 @@ public class Forest {
 			return pushOnBack(kmer,l);
 		}
 	}
+	void unstoreNode(int i){
+		this.roots.remove(i);
+		this.bitarray.set(nodeIndex(i),false);
+	}
 	public String pushOnFront(String kmer,Letter l){
 		return kmer.substring(1)+l.getChar();
 	}
