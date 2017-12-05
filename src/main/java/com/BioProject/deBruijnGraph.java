@@ -31,23 +31,32 @@ public class deBruijnGraph {
 	public deBruijnGraph() throws IOException{
 		Set<String> kmers=new HashSet<String>();
 		Set<String> edgemers=new HashSet<String>();
+		k=31;
 		ReadFastqFile(kmers,edgemers);
+		
 		hash=new Hash(k,kmers);
-		size=kmers.size();
-		IN=new boolean[size][4];
-		OUT=new boolean[size][4];
+		n=kmers.size();
+		IN=new boolean[n][4];
+		OUT=new boolean[n][4];
+		this.forest=new Forest(n);
 		for(String edge:edgemers){
 			String front=edge.substring(0,k-1);
 			String back=edge.substring(1,k);
 			char first=edge.charAt(0);
 			char last=edge.charAt(k-1);
+			
 			OUT[f(front)][charToIndex(last)]=true;
 			IN[f(back)][charToIndex(first)]=true;
 		}
+		String t=kmers.iterator().next();
+		System.out.println(t);
+		System.out.println(f(t));
 		construct_forest(kmers,k*2);
+		
 	}
 	int f(String kmer){
-		return (int)hash.getIndex(kmer);
+		long res=hash.getIndex(kmer);
+		return (int)res;
 	}
 	int charToIndex(char letter){
 		if(letter=='A')return 0;
@@ -82,6 +91,51 @@ public class deBruijnGraph {
 	void store(String mer){
 		forest.storeNode(f(mer), mer);
 	}
+	
+	boolean query(String m){
+		int h=f(m);
+		if(h<0||h>=n){
+			return false;
+		}
+		int hop=0;
+		boolean in;
+		int letter;
+		if(this.forest.roots.containsKey(h)){
+			if(m.equals(this.forest.roots.get(h)))return true;
+		}
+		while(!this.forest.isStored(h)){
+			hop++;
+			if(hop>3*this.alpha+10)return false;
+			in=this.forest.parent_in_IN(h);
+			if(in)letter=charToIndex(m.charAt(k-2));
+			else letter=charToIndex(m.charAt(0));
+			String parent=this.forest.getNext(h, m);
+			System.out.println(m);
+			System.out.println(parent);
+			m=parent;
+			h=f(m);
+			if(h>=n||h<0){
+				return false;
+			}
+			if(in){
+				if(!OUT[h][letter])return false;
+			}
+			else{
+				if(!IN[h][letter])return false;
+			}
+		}
+		if(m.equals(this.forest.roots.get(h))){
+			return true;
+		}
+		return false;
+	}
+	boolean queryEdge(String u,String v){
+		int fu=f(u);
+		int fv=f(v);
+		int outIndex=charToIndex(v.charAt(k-1));
+		int inIndex=charToIndex(u.charAt(0));
+		return OUT[fu][outIndex]&&IN[fv][inIndex];
+	}
 	void construct_forest(Set<String> kmers,int a){
 		alpha=a;
 		Set<String> visited_mers = new TreeSet<String>();
@@ -112,6 +166,7 @@ public class deBruijnGraph {
 						queue.add(m);
 						move_kmer(kmers,visited_mers,m);
 						int fm=f(m);
+						
 						int fc=f(c);
 						p[fm]=c;
 						if(inorout.get(i)){
@@ -141,6 +196,7 @@ public class deBruijnGraph {
  		}
 		kmers=visited_mers;
 	}
+	
 	void getNeighbors(String c,List<String> neighbors,List<Boolean> inorout){
 		neighbors.clear();
 		inorout.clear();
@@ -185,6 +241,93 @@ public class deBruijnGraph {
 		Letter vL=new Letter(outIndex);
 		mergeTrees(u,v,uL,vL,uT,vT,uH,vH,u_heights,v_heights);
 		return true;
+	}
+	boolean removeEdge(String u,String v){
+		for(int i=0;i<k-2;i++){
+			if(u.charAt(i+1)!=v.charAt(i))return false;
+		}
+		int fu=f(u);
+		int fv=f(v);
+		if(fu<0||fv<0){
+			return false;
+		}
+		int outIndex=charToIndex(v.charAt(k-2));
+		int inIndex=charToIndex(u.charAt(0));
+		OUT[fu][outIndex]=false;
+		IN[fv][inIndex]=false;
+		if(!this.forest.isStored(fu)&&this.forest.getNext(fu, u)==v){
+			removeUpdate(u,v);
+		}
+		else if(!this.forest.isStored(fv)&&this.forest.getNext(fv, v)==u){
+			removeUpdate(v,u);
+		}
+		
+		return true;
+	}
+	void removeUpdate(String child,String parent){
+		int fChild=f(child);
+		//int fParent=f(parent);
+		this.forest.storeNode(fChild, child);
+		Tree root=getRoot(parent);
+		Map<String,Integer> heights=new HashMap<String,Integer>();
+		int height=getTreeHeightRoot(root.root,heights);
+		List<String> sorted=new ArrayList<String>();
+		sorted.addAll(heights.keySet());
+		if(this.alpha>height){
+			removalFix(sorted,heights);
+		}
+		Map<String,Integer> heights2=new HashMap<String,Integer>();
+		Tree croot=getRoot(child);
+		int childheight=getTreeHeightRoot(croot.root,heights2);
+		List<String> sorted2=new ArrayList<String>();
+		sorted.addAll(heights2.keySet());
+		if(this.alpha>childheight){
+			removalFix(sorted2,heights2);
+		}
+	}
+	void removalFix(List<String> kmers,Map<String,Integer>heights){
+		List<Integer> hashs=new ArrayList<Integer>();
+		for(int i=0;i<kmers.size();i++){
+			hashs.add(f(kmers.get(i)));
+		}
+		for(int i=0;i<kmers.size();i++){
+			int hash=hashs.get(i);
+			String mer=kmers.get(i);
+			for(int j=0;j<4;j++){
+				if(IN[hash][j]){
+					Letter l=new Letter(j);
+					String neighbor=this.forest.pushOnFront(mer, l);
+					if(!hashs.contains(f(neighbor))){
+						Tree root=getRoot(neighbor);
+						Tree merRoot=getRoot(mer);
+						Letter nletter=new Letter(neighbor.charAt(0));
+						Letter tletter=new Letter(mer.charAt(k-2));
+						Map<String,Integer> u_heights=new HashMap<String,Integer>(); 
+						Map<String,Integer> v_heights=new HashMap<String,Integer>(); 
+						int uH=getTreeHeightRoot(root.root,u_heights);
+						int vH=getTreeHeightRoot(merRoot.root,v_heights);
+						mergeTrees(neighbor,mer,nletter,tletter,root,merRoot,uH,vH,u_heights,v_heights);
+						return;
+					}
+				}
+				if(OUT[hash][j]){
+					Letter l=new Letter(j);
+					String neighbor=this.forest.pushOnBack(mer, l);
+					if(!hashs.contains(f(neighbor))){
+						Tree root=getRoot(neighbor);
+						Tree merRoot=getRoot(mer);
+						Letter nletter=new Letter(neighbor.charAt(0));
+						Letter tletter=new Letter(mer.charAt(k-2));
+						Map<String,Integer> u_heights=new HashMap<String,Integer>(); 
+						Map<String,Integer> v_heights=new HashMap<String,Integer>(); 
+						int uH=getTreeHeightRoot(root.root,u_heights);
+						int vH=getTreeHeightRoot(merRoot.root,v_heights);
+						mergeTrees(mer,neighbor,tletter,nletter,merRoot,root,vH,uH,v_heights,u_heights);
+						return;
+					}
+				}
+			}
+		}
 	}
 	boolean mergeTrees(String u,String v, Letter uL,Letter vL,Tree uT,Tree vT,int uH,int vH,Map<String,Integer> u_heights,Map<String,Integer> v_heights){
 		int height_u=u_heights.get(u);

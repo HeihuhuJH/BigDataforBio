@@ -1,13 +1,17 @@
 package com.BioProject;
 
+import java.io.IOException;
+
 /**
  * Hello world!
  *
  */
 public class App 
 {
-    public static void main( String[] args )
+    public static void main( String[] args ) throws IOException
     {
-        System.out.println( "Hello World!" );
+    	deBruijnGraph graph=new deBruijnGraph();
+    	System.out.println(graph.query("GCAAAGGTATGAACCAGAGGCGAGAGCAGT"));
+    	System.out.println(graph.query("CGCCTGCCGGAAGCCTGGCAGTAACCGTTC"));
     }
 }

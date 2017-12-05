@@ -1,7 +1,10 @@
 package com.BioProject;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -56,7 +59,15 @@ public class Hash {
 		}
 	}
 	public long getIndex(String kmer){
-		return map2.get(map1.get(kmer));
+		if(!map1.containsKey(kmer)){
+			return -1;
+		}
+		long m1=map1.get(kmer);
+		if(!map2.containsKey(m1)){
+			return -2;
+		}
+		long m2=map2.get(m1);
+		return m2;
 	}
 	public Map<String,Long> getMap1(){
 		return map1;
@@ -92,12 +103,11 @@ public class Hash {
 			for(String key:nodes){
 				//String key=kmers.get(i);
 				long value=karp(key,P,base);
-				System.out.println(key+" "+value);
+				
 				if(set.contains(value)){
 					isInjective=false;
 					hmap.clear();
-					System.out.println(key+" "+value);
-					System.out.println(set.size()+"Not OK");
+					
 					break;
 				}
 				else{
@@ -114,9 +124,19 @@ public class Hash {
 			 hmap2.put(hmap.get(key), count);
 			count++;
 		}
+		String filepath="/cise/homes/jinhao/P2P/Log/log_peer_" + 1 + ".log";
+		File place=new File("/cise/homes/jinhao/P2P/Log/peer_"+1+"/");
+		//System.out.println(p.id+String.valueOf(place.exists()));
+		if(!place.exists()){
+			//System.out.println("create"+"/P2P/peer_"+p.id+"/");
+			place.mkdirs();
+		}
+		BufferedWriter writefile=new BufferedWriter(new FileWriter(filepath,true));
 		for(String key:hmap.keySet()){
 			 System.out.println(key+":"+hmap2.get(hmap.get(key)));
+			 writefile.write(key+":"+hmap2.get(hmap.get(key))+"\n");
 		}
+		writefile.close();
         /*String alphabet = "ACGT";
         int d = alphabet.length();
         int q = get_prime(30, nodes.size());
