@@ -16,35 +16,38 @@ public class Forest {
 	public Map<Integer, String> roots;
 	public char[] parents;
 	public boolean[] inorout;
+	public boolean[] rooted;
 	public Forest(int size){
 		bitarray=new BitSet(4*size);
 		n=size;
 		roots=new HashMap<Integer,String>(n);
 		parents=new char[n];
 		inorout=new boolean[n];
+		rooted=new boolean[n];
 	}
 	int nodeIndex(int i){
 		return 4*i;
 	}
-	void setNode(int i, boolean IN, Letter l){
-		int index=nodeIndex(i);
-		parents[i]=l.getChar();
+	void setNode(int i, boolean IN, char l){
+		//int index=nodeIndex(i);
+		parents[i]=l;
 		inorout[i]=IN;
-		bitarray.set(index, false);
+		rooted[i]=false;
+		/*bitarray.set(index, false);
 		bitarray.set(index+1,IN);
 		bitarray.set(index+2,l.bits.get(0));
-		bitarray.set(index+3,l.bits.get(1));
+		bitarray.set(index+3,l.bits.get(1));*/
 	}
-	void setLetter(int i, Letter l){
-		int index=nodeIndex(i);
-		parents[i]=l.getChar();
-		bitarray.set(index+2,l.bits.get(0));
-		bitarray.set(index+3,l.bits.get(1));
+	void setLetter(int i, char l){
+		//int index=nodeIndex(i);
+		parents[i]=l;
+		//bitarray.set(index+2,l.bits.get(0));
+		//bitarray.set(index+3,l.bits.get(1));
 	}
-	Letter getLetter(int i){
-		int index=nodeIndex(i);
-		Letter l=new Letter(bitarray.get(index+2),bitarray.get(index+3));
-		return l;
+	char getLetter(int i){
+		//int index=nodeIndex(i);
+		//Letter l=new Letter(bitarray.get(index+2),bitarray.get(index+3));
+		return parents[i];
 	}
 	List<Boolean> getNodeData(int i){
 		List<Boolean> data=new ArrayList<Boolean>();
@@ -57,41 +60,44 @@ public class Forest {
 	}
 	void storeNode(int i,String kmer){
 		roots.put(i, kmer);
-		
-		bitarray.set(nodeIndex(i),false);
+		rooted[i]=true;
+		//bitarray.set(nodeIndex(i),false);
 	}
 	boolean isStored(int i){
-		return bitarray.get(nodeIndex(i));
+		return rooted[i];
 	}
 	boolean parent_in_IN(int i){
-		return bitarray.get(nodeIndex(i)+1);
+		//return bitarray.get(nodeIndex(i)+1);
+		return inorout[i];
 	}
 	void set_parent_in_IN(int i, boolean in){
-		bitarray.set(nodeIndex(i)+1,in);
+		//bitarray.set(nodeIndex(i)+1,in);
 		inorout[i]=in;
 	}
 	String getNext(int i,String kmer){
 		int index=nodeIndex(i);
-		Letter l=new Letter(bitarray.get(index+2),bitarray.get(index+3));
-		
-		System.out.println(l.getChar());
-		if(bitarray.get(index+1)){
+		//Letter l=new Letter(bitarray.get(index+2),bitarray.get(index+3));
+		char l=parents[i];
+		//System.out.println(l.getChar());
+		if(inorout[i]) {
 			return pushOnFront(kmer,l);
 		}
+		
 		else{
 			return pushOnBack(kmer,l);
 		}
 	}
 	void unstoreNode(int i){
 		this.roots.remove(i);
+		rooted[i]=false;
 		this.bitarray.set(nodeIndex(i),false);
 	}
-	public String pushOnFront(String kmer,Letter l){
+	public String pushOnFront(String kmer,char l){
 		
-		return l.getChar()+kmer.substring(0, kmer.length()-1);
+		return l+kmer.substring(0, kmer.length()-1);
 	}
-	public String pushOnBack(String kmer,Letter l){
-		return kmer.substring(1)+l.getChar();
+	public String pushOnBack(String kmer,char l){
+		return kmer.substring(1)+l;
 	}
 	
 }

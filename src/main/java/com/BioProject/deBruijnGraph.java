@@ -31,7 +31,7 @@ public class deBruijnGraph {
 	public deBruijnGraph() throws IOException{
 		Set<String> kmers=new HashSet<String>();
 		Set<String> edgemers=new HashSet<String>();
-		k=31;
+		k=13;
 		ReadFastqFile(kmers,edgemers);
 		
 		hash=new Hash(k,kmers);
@@ -45,12 +45,21 @@ public class deBruijnGraph {
 			char first=edge.charAt(0);
 			char last=edge.charAt(k-1);
 			
+			
+			
+			
+			//System.out.println(edge);
+			//System.out.println(front);
+			//System.out.println(f(front));
+			//System.out.println(last);
 			OUT[f(front)][charToIndex(last)]=true;
 			IN[f(back)][charToIndex(first)]=true;
 		}
 		String t=kmers.iterator().next();
 		System.out.println(t);
 		System.out.println(f(t));
+		System.out.println(kmers.size());
+
 		construct_forest(kmers,k*2);
 		
 	}
@@ -63,18 +72,26 @@ public class deBruijnGraph {
 		if(letter=='C')return 1;
 		if(letter=='G')return 2;
 		if(letter=='T')return 3;
-		return -1;
+		return 0;
+	}
+	char indexTochar(int index) {
+		if(index==0)return'A';
+		if(index==1)return'C';
+		if(index==2)return'G';
+		if(index==3)return'T';
+		return 'N';
 	}
 	void ReadFastqFile(Set<String> kmers,Set<String> edgemers) throws IOException{
-		FileInputStream inputFastq = new FileInputStream("read_1.fq");
+		FileInputStream inputFastq = new FileInputStream("SP1.fq");
         FastqReader qReader = new SangerFastqReader();
 
  
-        
+        String read="";
         for (Fastq fastq : qReader.read(inputFastq)) {
-            String read = fastq.getSequence();
+            read = fastq.getSequence();
 //            System.out.println(read);
             for (int i = 0; i <= read.length()-k; i++) {
+            	//System.out.println(kmers.size());
                 kmers.add(read.substring(i, i + k - 1));
                 kmers.add(read.substring(i + 1, i + k));
             }
@@ -110,8 +127,8 @@ public class deBruijnGraph {
 			if(in)letter=charToIndex(m.charAt(k-2));
 			else letter=charToIndex(m.charAt(0));
 			String parent=this.forest.getNext(h, m);
-			System.out.println(m);
-			System.out.println(parent);
+		//	System.out.println(m);
+			//System.out.println(parent);
 			m=parent;
 			h=f(m);
 			if(h>=n||h<0){
@@ -132,8 +149,10 @@ public class deBruijnGraph {
 	boolean queryEdge(String u,String v){
 		int fu=f(u);
 		int fv=f(v);
-		int outIndex=charToIndex(v.charAt(k-1));
+		int outIndex=charToIndex(v.charAt(k-2));
 		int inIndex=charToIndex(u.charAt(0));
+		boolean flag=OUT[fu][outIndex];
+		boolean flag2=IN[fv][inIndex];
 		return OUT[fu][outIndex]&&IN[fv][inIndex];
 	}
 	void construct_forest(Set<String> kmers,int a){
@@ -143,7 +162,7 @@ public class deBruijnGraph {
 		String[] p1=new String[n];
 		String[] p2=new String[n];
 		String[] p=new String[n];
-		while(visited_mers.size()!=n){
+		while(visited_mers.size()!=n&&kmers.size()!=0){
 			String root=kmers.iterator().next();
 			store(root);
 			move_kmer(kmers,visited_mers,root);
@@ -158,8 +177,8 @@ public class deBruijnGraph {
 			while(!queue.isEmpty()){
 				String c=queue.poll();
 				getNeighbors(c,neighbors,inorout);
-				Letter first=new Letter(c.charAt(0));
-				Letter last=new Letter(c.charAt(c.length()-1));
+				char first=c.charAt(0);
+				char last=c.charAt(c.length()-1);
 				for(int i=0;i<neighbors.size();i++){
 					String m=neighbors.get(i);
 					if(!visited_mers.contains(m)){
@@ -203,23 +222,28 @@ public class deBruijnGraph {
 		int fc=f(c);
 		for(int i=0;i<4;i++){
 			if(IN[fc][i]){
-				Letter l=new Letter(i);
+				//Letter l=new Letter(i);
+				char l=indexTochar(i);
 				String e=forest.pushOnFront(c, l);
 				neighbors.add(e);
 				inorout.add(true);
 			}
 			if(OUT[fc][i]){
-				Letter l=new Letter(i);
+				//Letter l=new Letter(i);
+				char l=indexTochar(i);
 				String e=forest.pushOnBack(c, l);
 				neighbors.add(e);
 				inorout.add(false);
 			}
 		}
+		if(neighbors.contains("GGCGAATGCCCGCCAGGCGATTGTGGCGTG")) {
+			System.out.println(c);
+		}
 	}
 	public Boolean addEdge(String u,String v){
 		int fu=f(u);
 		int fv=f(v);
-		int outIndex=charToIndex(v.charAt(k-1));
+		int outIndex=charToIndex(v.charAt(k-2));
 		int inIndex=charToIndex(u.charAt(0));
 		if(OUT[fu][outIndex]){
 			System.out.println("Edge exisits");
@@ -237,8 +261,8 @@ public class deBruijnGraph {
 		if(uT.root.equals(vT.root)){
 			return true;
 		}
-		Letter uL=new Letter(inIndex);
-		Letter vL=new Letter(outIndex);
+		char uL=indexTochar(inIndex);
+		char vL=indexTochar(outIndex);
 		mergeTrees(u,v,uL,vL,uT,vT,uH,vH,u_heights,v_heights);
 		return true;
 	}
@@ -295,13 +319,16 @@ public class deBruijnGraph {
 			String mer=kmers.get(i);
 			for(int j=0;j<4;j++){
 				if(IN[hash][j]){
-					Letter l=new Letter(j);
+					//Letter l=new Letter(j);
+					char l=indexTochar(j);
 					String neighbor=this.forest.pushOnFront(mer, l);
 					if(!hashs.contains(f(neighbor))){
 						Tree root=getRoot(neighbor);
 						Tree merRoot=getRoot(mer);
-						Letter nletter=new Letter(neighbor.charAt(0));
-						Letter tletter=new Letter(mer.charAt(k-2));
+						//Letter nletter=new Letter(neighbor.charAt(0));
+						char nletter=neighbor.charAt(0);
+						//Letter tletter=new Letter(mer.charAt(k-2));
+						char tletter=mer.charAt(k-2);
 						Map<String,Integer> u_heights=new HashMap<String,Integer>(); 
 						Map<String,Integer> v_heights=new HashMap<String,Integer>(); 
 						int uH=getTreeHeightRoot(root.root,u_heights);
@@ -311,13 +338,15 @@ public class deBruijnGraph {
 					}
 				}
 				if(OUT[hash][j]){
-					Letter l=new Letter(j);
+					char l=indexTochar(j);
 					String neighbor=this.forest.pushOnBack(mer, l);
 					if(!hashs.contains(f(neighbor))){
 						Tree root=getRoot(neighbor);
 						Tree merRoot=getRoot(mer);
-						Letter nletter=new Letter(neighbor.charAt(0));
-						Letter tletter=new Letter(mer.charAt(k-2));
+						//Letter nletter=new Letter(neighbor.charAt(0));
+						char nletter=neighbor.charAt(0);
+						//Letter tletter=new Letter(mer.charAt(k-2));
+						char tletter=mer.charAt(k-2);
 						Map<String,Integer> u_heights=new HashMap<String,Integer>(); 
 						Map<String,Integer> v_heights=new HashMap<String,Integer>(); 
 						int uH=getTreeHeightRoot(root.root,u_heights);
@@ -329,7 +358,7 @@ public class deBruijnGraph {
 			}
 		}
 	}
-	boolean mergeTrees(String u,String v, Letter uL,Letter vL,Tree uT,Tree vT,int uH,int vH,Map<String,Integer> u_heights,Map<String,Integer> v_heights){
+	boolean mergeTrees(String u,String v, char uL,char vL,Tree uT,Tree vT,int uH,int vH,Map<String,Integer> u_heights,Map<String,Integer> v_heights){
 		int height_u=u_heights.get(u);
 		int height_v=v_heights.get(v);
 		if(uT.root.equals(vT.root)){
@@ -415,13 +444,13 @@ public class deBruijnGraph {
 	}
 	void flipEdge(int nH,int npH,String npk,boolean in){
 		this.forest.set_parent_in_IN(nH, !in);
-		Letter l;
+		char l;
 		if(in){
-			l=new Letter(charToIndex(npk.charAt(k-1)));
+			l=npk.charAt(k-1);
 			this.forest.setLetter(nH, l);
 		}
 		else{
-			l=new Letter(charToIndex(npk.charAt(0)));
+			l=npk.charAt(0);
 			this.forest.setLetter(nH, l);
 		}
 	}
@@ -468,6 +497,7 @@ public class deBruijnGraph {
 		int n_hash;
 		for(int i=0;i<neighbors.size();i++){
 			n_hash=f(neighbors.get(i));
+			if(n_hash==-1)System.out.println(neighbors.get(i));
 			String parent=this.forest.getNext(n_hash, neighbors.get(i));
 			if(node.equals(parent)&&!this.forest.isStored(n_hash)){
 				children.add(neighbors.get(i));
@@ -507,7 +537,7 @@ public class deBruijnGraph {
 		boolean in=this.forest.parent_in_IN(f);
 		int letter;
 		if(in){
-			letter=charToIndex(kmer.charAt(k-1));
+			letter=charToIndex(kmer.charAt(k-2));
 		}
 		else{
 			letter=charToIndex(kmer.charAt(0));
