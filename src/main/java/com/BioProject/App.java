@@ -13,7 +13,43 @@ public class App
 {
     public static void main( String[] args ) throws IOException
     {
-    	deBruijnGraph graph=new deBruijnGraph();
+    	String fileName=args[0];
+    	int k=Integer.parseInt(args[1]);
+    	//String fileName="read_1.fq";
+    	//int k=31;
+    	long startTime = System.currentTimeMillis(); 
+    	deBruijnGraph graph=new deBruijnGraph(fileName,k);
+    	long endTime   = System.currentTimeMillis(); 
+    	long TotalTime = endTime - startTime;       
+    	System.out.println("Toal construction time: "+TotalTime+"ms");
+    	String u=graph.sampleEdge.substring(0, k-1);
+    	String v=graph.sampleEdge.substring(1);
+    	
+    	System.out.println("Query edge: "+graph.sampleEdge);
+    	startTime=System.currentTimeMillis();
+    	boolean flag=graph.queryEdge(u, v);
+    	endTime=System.currentTimeMillis();
+    	TotalTime = endTime - startTime;     
+    	System.out.println("Query edge time: "+TotalTime+"ms");
+    	System.out.println("Query return"+":"+flag);
+    	
+    	System.out.println("Remove edge: "+graph.sampleEdge);
+    	startTime=System.currentTimeMillis();
+    	graph.removeEdge(u, v);
+    	endTime=System.currentTimeMillis();
+    	TotalTime = endTime - startTime;        	
+    	System.out.println("Remove edge time: "+TotalTime+"ms");
+    	flag=graph.queryEdge(u, v);
+    	System.out.println("Query again return"+":"+flag);
+    	
+    	System.out.println("Add edge: "+graph.sampleEdge);
+    	startTime=System.currentTimeMillis();
+    	graph.addEdge(u, v);
+    	endTime=System.currentTimeMillis();
+    	TotalTime = endTime - startTime;        	
+    	System.out.println("Add edge time: "+TotalTime+"ms");
+    	flag=graph.queryEdge(u, v);
+    	System.out.println("Query again return"+":"+flag);
     	//System.out.println(graph.query("GCAAAGGTATGAACCAGAGGCGAGAGCAGT"));
     	//System.out.println(graph.query("CGCCTGCCGGAAGCCTGGCAGTAACCGTTC"));
     	/*boolean flag=false;
@@ -27,16 +63,16 @@ public class App
         	
     	}*/
     
-    	String u="GTCTGAACTCCA";
+    	/*String u="TTTTTTTTTTTTTTTTTTTTTAAAAATTTTTTTAATTAAACAGAAGATAAT";
     	//while(!graph.query(u))u=g();
-    	String v="TCTGAACTCCAG";
-    	//while(!graph.query(v))v=g();
-
+    	String v="TTTTTTTTTTTTTTTTTTTTAAAAATTTTTTTAATTAAACAGAAGATAATT";
+    	System.out.println(u);
+    	System.out.println(v);
     	System.out.println(graph.queryEdge(u, v));
     	graph.removeEdge(u, v);
     	System.out.println(graph.queryEdge(u, v));
     	graph.addEdge(u, v);
-    	System.out.println(graph.queryEdge(u, v));
+    	System.out.println(graph.queryEdge(u, v));*/
     	
     }
     static String[] generate() {

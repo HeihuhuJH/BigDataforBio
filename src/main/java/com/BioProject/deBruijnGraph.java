@@ -28,17 +28,30 @@ public class deBruijnGraph {
 	int n;//size of kmers
 	Hash hash;
 	int size;
-	public deBruijnGraph() throws IOException{
+	public String first;
+	public String second;
+	String fileName;
+	public String sampleEdge;
+	public deBruijnGraph(String fileName,int k) throws IOException{
 		Set<String> kmers=new HashSet<String>();
 		Set<String> edgemers=new HashSet<String>();
-		k=13;
+		this.k=k;
+		this.fileName=fileName;
+		long startTime = System.currentTimeMillis(); 
 		ReadFastqFile(kmers,edgemers);
-		
+		long endTime   = System.currentTimeMillis(); 
+    	long TotalTime = endTime - startTime;       
+    	System.out.println("Read file time: "+TotalTime+"ms");
+    	startTime = System.currentTimeMillis(); 
 		hash=new Hash(k,kmers);
+		endTime   = System.currentTimeMillis(); 
+    	TotalTime = endTime - startTime;       
+    	System.out.println("Hash functions contruction time: "+TotalTime+"ms");
 		n=kmers.size();
 		IN=new boolean[n][4];
 		OUT=new boolean[n][4];
 		this.forest=new Forest(n);
+		startTime = System.currentTimeMillis(); 
 		for(String edge:edgemers){
 			String front=edge.substring(0,k-1);
 			String back=edge.substring(1,k);
@@ -55,12 +68,14 @@ public class deBruijnGraph {
 			OUT[f(front)][charToIndex(last)]=true;
 			IN[f(back)][charToIndex(first)]=true;
 		}
-		String t=kmers.iterator().next();
-		System.out.println(t);
-		System.out.println(f(t));
-		System.out.println(kmers.size());
-
+		endTime   = System.currentTimeMillis(); 
+    	TotalTime = endTime - startTime;       
+    	System.out.println("IN and OUT contruction time: "+TotalTime+"ms");
+    	startTime = System.currentTimeMillis(); 
 		construct_forest(kmers,k*2);
+		endTime   = System.currentTimeMillis(); 
+    	TotalTime = endTime - startTime;       
+    	System.out.println("Forest contruction time: "+TotalTime+"ms");
 		
 	}
 	int f(String kmer){
@@ -82,11 +97,12 @@ public class deBruijnGraph {
 		return 'N';
 	}
 	void ReadFastqFile(Set<String> kmers,Set<String> edgemers) throws IOException{
-		FileInputStream inputFastq = new FileInputStream("SP1.fq");
+		FileInputStream inputFastq = new FileInputStream(this.fileName);
         FastqReader qReader = new SangerFastqReader();
 
  
         String read="";
+        
         for (Fastq fastq : qReader.read(inputFastq)) {
             read = fastq.getSequence();
 //            System.out.println(read);
@@ -96,6 +112,7 @@ public class deBruijnGraph {
                 kmers.add(read.substring(i + 1, i + k));
             }
             for (int i = 0; i < read.length()-k; i++) {
+            	sampleEdge=read.substring(i, i + k );
             	edgemers.add(read.substring(i, i + k ));
             	edgemers.add(read.substring(i + 1, i + k+1));
             }

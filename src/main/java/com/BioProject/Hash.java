@@ -100,10 +100,10 @@ public class Hash {
     public static void main(String[] args) throws FileNotFoundException,
             IOException {
 
-        FileInputStream inputFastq = new FileInputStream("SP1.fq");
+        FileInputStream inputFastq = new FileInputStream("ERR243027.filt.fastq");
         FastqReader qReader = new SangerFastqReader();
 
-        int k = 12;
+        int k = 52;
         Set<String> nodes = new HashSet<String>();
         for (Fastq fastq : qReader.read(inputFastq)) {
             String read = fastq.getSequence();
@@ -123,7 +123,7 @@ public class Hash {
 			isInjective=true;
 			set.clear();
 			 base1=(int)(Math.random()*(P-1));
-			System.out.println(P);
+			//System.out.println(P);
 			for(String key:nodes){
 				//String key=kmers.get(i);
 				long value=karp(key,P,base1);
@@ -157,7 +157,7 @@ public class Hash {
 			 writefile.write(key+":"+minimalHash.get(karp(key,P,base1))+"\n");
 		}
 		writefile.close();
-        /*String alphabet = "ACGT";
+        /*String alphabet = "ACGT"; 
         int d = alphabet.length();
         int q = get_prime(30, nodes.size());
         System.out.println(q);
