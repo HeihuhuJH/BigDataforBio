@@ -15,8 +15,10 @@ public class App
     {
     	String fileName=args[0];
     	int k=Integer.parseInt(args[1]);
-    	//String fileName="read_1.fq";
-    	//int k=31;
+    	//String fileName="ERR243027.filt.fastq";
+    	//int k=39;
+
+
     	long startTime = System.currentTimeMillis(); 
     	deBruijnGraph graph=new deBruijnGraph(fileName,k);
     	long endTime   = System.currentTimeMillis(); 

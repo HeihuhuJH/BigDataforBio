@@ -25,20 +25,24 @@ public class Hash {
 	int base;
 	Set<String> kmers;
 	int k;
-	Map<String,Long> map1;
-	Map<Long,Long> map2;
+
 	int P;
 	MinimalPerfectHash<Long> minimalHash;
 	public Hash(int k,Set<String> kmers) throws IOException{
 		this.k=k;
 		this.kmers=kmers;
 		boolean isInjective=false;
-		map1=new HashMap<String,Long>();
-		map2=new HashMap<Long,Long>();
+
 		this.P=get_prime(k-1,kmers.size());
 		//int length=kmers.size();
+		int fails=0;
 		Set<Long> set=new TreeSet<Long>();
 		while(!isInjective){
+			fails++;
+			if(fails==5) {
+				this.P=firstLargerPrime(this.P*2);
+				fails=0;
+			}
 			isInjective=true;
 			set.clear();
 			this.base=(int)(Math.random()*(P-1));
@@ -60,7 +64,7 @@ public class Hash {
 		LongHash l = new LongHash();;
 		byte[] desc=MinimalPerfectHash.generate(set, l);
 		minimalHash=new MinimalPerfectHash<Long>(desc,l);
-		String filepath="/cise/homes/jinhao/P2P/Log/log_peer_" + 1 + ".log";
+		/*String filepath="/cise/homes/jinhao/P2P/Log/log_peer_" + 1 + ".log";
 		File place=new File("/cise/homes/jinhao/P2P/Log/peer_"+1+"/");
 		//System.out.println(p.id+String.valueOf(place.exists()));
 		if(!place.exists()){
@@ -72,7 +76,7 @@ public class Hash {
 			 //System.out.println(key+":"+hmap2.get(hmap.get(key)));
 			 writefile.write(key+":"+minimalHash.get(karpRabin(key,P))+"\n");
 		}
-		writefile.close();
+		writefile.close();*/
 		/*long count=0;
 		for(String key:map1.keySet()){
 			map2.put(map1.get(key), count);
@@ -91,12 +95,7 @@ public class Hash {
 		long m2=minimalHash.get(karpRabin(kmer,P));
 		return m2;
 	}
-	public Map<String,Long> getMap1(){
-		return map1;
-	}
-	public long getKP(String kmer){
-		return map1.get(kmer);
-	}
+
     public static void main(String[] args) throws FileNotFoundException,
             IOException {
 

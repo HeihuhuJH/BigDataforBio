@@ -32,6 +32,8 @@ public class deBruijnGraph {
 	public String second;
 	String fileName;
 	public String sampleEdge;
+	int readCount=0;
+	
 	public deBruijnGraph(String fileName,int k) throws IOException{
 		Set<String> kmers=new HashSet<String>();
 		Set<String> edgemers=new HashSet<String>();
@@ -42,6 +44,8 @@ public class deBruijnGraph {
 		long endTime   = System.currentTimeMillis(); 
     	long TotalTime = endTime - startTime;       
     	System.out.println("Read file time: "+TotalTime+"ms");
+    	System.out.println("Count of reads: "+readCount);
+    	System.out.println("Size of nodes: "+kmers.size());
     	startTime = System.currentTimeMillis(); 
 		hash=new Hash(k,kmers);
 		endTime   = System.currentTimeMillis(); 
@@ -105,6 +109,7 @@ public class deBruijnGraph {
         
         for (Fastq fastq : qReader.read(inputFastq)) {
             read = fastq.getSequence();
+            readCount++;
 //            System.out.println(read);
             for (int i = 0; i <= read.length()-k; i++) {
             	//System.out.println(kmers.size());
